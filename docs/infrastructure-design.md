@@ -345,3 +345,60 @@ flowchart TD
 ```
 
 Terraform は依存関係を自動解決しますが、`app_service` は `key_vault` の `app_service_principal_id` 出力を参照するため、内部的な循環参照に注意が必要です（現在の実装では `module.app_service.app_service_principal_id` を `module.key_vault` に渡す構造のため、`key_vault` は `app_service` の後に作成されます）。
+
+---
+
+## 11. 月額料金見積もり
+
+> **注意:** 以下は **Japan East リージョン**における概算です（2026年2月時点の公開料金に基づく）。為替レートや料金改定により変動します。実際の料金は [Azure 料金計算ツール](https://azure.microsoft.com/ja-jp/pricing/calculator/) で確認してください。
+
+### 11.1 リソース単価一覧
+
+#### App Service Plan (Linux)
+
+| SKU | 時間単価 (USD) | 月額概算 (USD) |
+|---|---|---|
+| B1 (Basic) | $0.019/時間 | ~$13.87 |
+| P1v3 (Premium v3) | $0.188/時間 | ~$137.24 |
+| P2v3 (Premium v3) | $0.376/時間 | ~$274.48 |
+
+#### Azure Database for PostgreSQL Flexible Server
+
+| SKU | コンピュート (USD) | ストレージ (USD) | 合計 (USD) |
+|---|---|---|---|
+| B_Standard_B1ms + 32GB | ~$18.98 | ~$4.42 | **~$23.40** |
+| GP_Standard_D2s_v3 + 64GB | ~$171.55 | ~$8.83 | **~$180.38** |
+| GP_Standard_D4s_v3 + 128GB | ~$343.10 | ~$17.66 | **~$360.76** |
+
+> ストレージ単価: $0.138/GB/月。バックアップストレージ (LRS) は別途 $0.095/GB/月。
+
+#### その他リソース
+
+| リソース | 月額概算 (USD) | 備考 |
+|---|---|---|
+| Key Vault (Standard) | ~$0.03 | 操作 10,000回/月として |
+| Log Analytics (PerGB2018) | 最初の 5GB まで無料、超過分 $3.34/GB/月 | — |
+| Private DNS Zone | ~$0.50/ゾーン/月 | クエリ料金は $0.40/100万クエリ |
+| Microsoft Entra External ID | 50,000 MAU まで無料 | 超過分 $0.01625/MAU (Core) |
+
+### 11.2 環境別月額コスト概算
+
+| 項目 | dev | staging | prod |
+|---|---|---|---|
+| App Service Plan | ~$13.87 | ~$137.24 | ~$274.48 |
+| PostgreSQL (コンピュート+ストレージ) | ~$23.40 | ~$180.38 | ~$360.76 |
+| Key Vault | ~$0.03 | ~$0.03 | ~$0.03 |
+| Log Analytics | $0.00 (1GB, 無料枠内) | $0.00 (5GB, 無料枠内) | ~$16.70 (10GB, 5GB超過分) |
+| Private DNS Zone | ~$0.50 | ~$0.50 | ~$0.50 |
+| Entra External ID | $0.00 (50,000 MAU 以下) | $0.00 (50,000 MAU 以下) | $0.00 (50,000 MAU 以下) |
+| **合計** | **~$37.80** | **~$318.15** | **~$652.47** |
+
+### 11.3 コスト最適化のヒント
+
+| 施策 | 対象環境 | 効果 |
+|---|---|---|
+| App Service Plan の Savings Plan (1年) | staging / prod | P1v3: ~25% 削減、P2v3: ~25% 削減 |
+| App Service Plan の Reserved Instance (3年) | prod | ~45% 削減 |
+| PostgreSQL Reserved Instance (1年) | staging / prod | ~33% 削減 |
+| dev 環境の夜間・週末停止 | dev | ~60% 削減 (稼働時間次第) |
+| Log Analytics のデータサンプリング | 全環境 | 取り込み量を削減しコスト抑制 |
