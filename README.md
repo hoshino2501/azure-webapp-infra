@@ -18,7 +18,8 @@ graph TB
     LogAnalytics["Log Analytics Workspace<br/>(ログ集約・監視)"]
 
     Internet -->|HTTPS| AppService
-    Internet <-->|認証・認可| EntraID
+    Internet -->|認証| EntraID
+    AppService -->|認可確認| EntraID
     AppService -->|DB 接続| PostgreSQL
     AppService -->|Managed Identity 経由で参照| KeyVault
     AppService -->|診断ログ| LogAnalytics
@@ -27,7 +28,7 @@ graph TB
 
 | コンポーネント | 用途 |
 |---|---|
-| Virtual Network | ネットワーク境界の確立。App Service・PostgreSQL をインターネット非公開にする |
+| Virtual Network | ネットワーク境界の確立。PostgreSQL・Key Vault をインターネット非公開にする |
 | Azure App Service | Web アプリケーションのホスティング（VNet 統合 + Managed Identity を有効化） |
 | Azure Database for PostgreSQL フレキシブルサーバー | アプリケーションのバックエンド DB（VNet インジェクションでプライベートアクセス） |
 | Azure Key Vault | DB パスワード等の機密情報を一元管理。App Service は Managed Identity 経由で参照 |
