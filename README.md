@@ -119,6 +119,55 @@ az login
 az account set --subscription "<サブスクリプション ID>"
 ```
 
+### 3. Terraform 設定ファイルの編集
+
+#### backend の設定
+
+`environments/<env>/main.tf` の backend ブロックに、手順 1 で作成したストレージアカウント名を記載してください。
+対象ファイル: `environments/dev/main.tf`, `environments/staging/main.tf`, `environments/prod/main.tf`
+
+```hcl
+backend "azurerm" {
+  resource_group_name  = "rg-tfstate"
+  storage_account_name = "<手順1で作成したストレージアカウント名>"  # ← ここを記入
+  container_name       = "tfstate"
+  key                  = "dev/terraform.tfstate"
+}
+```
+
+#### terraform.tfvars の編集
+
+`environments/<env>/terraform.tfvars` を開き、以下の値を実際の値に変更してください。
+
+| 変数 | 説明 |
+|---|---|
+| `entra_tenant_id` | Azure テナント ID（`az account show --query tenantId -o tsv` で確認できます） |
+| `suffix` | Key Vault・App Service などグローバル一意が必要なリソース名のサフィックス。他のサブスクリプションと重複しない文字列に変更してください |
+
+#### 機密情報の設定
+
+DB パスワード等の機密情報は `terraform.tfvars` に記載せず、環境変数で渡してください。
+
+```bash
+export TF_VAR_db_password="your-secret-password"
+```
+
+### 4. Entra External ID の追加設定（terraform apply 後）
+
+`terraform apply` でアプリ登録は自動作成されますが、以下の手順は Azure Portal で手動実行が必要です。
+
+1. **API 権限への管理者同意**
+   Azure Portal → Microsoft Entra ID → アプリの登録 → `app-<env>-<project_name>` を開く
+   → 「API のアクセス許可」 → 「<テナント名> に管理者の同意を与えます」をクリック
+
+2. **App Service 認証の有効化**
+   Azure Portal → App Service → 「認証」 → 「ID プロバイダーを追加」
+   → Microsoft を選択し、`terraform output entra_client_id` で取得したクライアント ID を設定
+
+3. **クライアントシークレットの有効期限管理**
+   クライアントシークレットの有効期限は dev/staging では `2026-12-31`、prod では `2027-12-31` に設定されています。
+   期限切れ前に `terraform apply` でシークレットを更新してください（`client_secret_expiry` 変数で管理）。
+
 ## 使い方
 
 ### Terraform の実行
@@ -137,15 +186,23 @@ terraform plan
 terraform apply
 ```
 
-### 環境変数・tfvars の設定
+## 環境ごとの設定差異
 
-`environments/<env>/terraform.tfvars` に環境ごとの値を記載します。
-機密情報（DB パスワード等）は tfvars には記載せず、環境変数または Azure Key Vault で管理してください。
+各環境の主なリソース設定は以下のとおりです。
 
-```bash
-# 環境変数での指定例
-export TF_VAR_db_password="your-secret-password"
-```
+| 項目 | dev | staging | prod |
+|---|---|---|---|
+| App Service SKU | B1 | P1v3 | P2v3 |
+| App Service Always On | 無効 | 有効 | 有効 |
+| PostgreSQL SKU | B_Standard_B1ms | GP_Standard_D2s_v3 | GP_Standard_D4s_v3 |
+| PostgreSQL ストレージ | 32 GB | 64 GB | 128 GB |
+| DBバックアップ保持期間 | 7 日 | 14 日 | 35 日 |
+| DB geo冗長バックアップ | 無効 | 無効 | 有効 |
+| Log Analytics ログ保持期間 | 30 日 | 60 日 | 90 日 |
+| Key Vault Purge Protection | 無効 | 無効 | **有効** |
+| VNet アドレス空間 | 10.0.0.0/16 | 10.1.0.0/16 | 10.2.0.0/16 |
+
+> **prod の Key Vault Purge Protection について**: `purge_protection_enabled = true` が設定されています。これを有効にすると Key Vault を削除しても保持期間内は完全消去できなくなります。リソースの再作成が必要な場合は注意してください。
 
 ## GitHub Actions による CI/CD
 
@@ -163,6 +220,7 @@ export TF_VAR_db_password="your-secret-password"
 | `AZURE_CLIENT_ID` | サービスプリンシパルのクライアント ID |
 | `AZURE_TENANT_ID` | Azure テナント ID |
 | `AZURE_SUBSCRIPTION_ID` | Azure サブスクリプション ID |
+| `TF_VAR_DB_PASSWORD` | PostgreSQL 管理者パスワード（`terraform apply` 時に `TF_VAR_db_password` として渡されます） |
 
 > GitHub Actions からの認証には、パスワードレスな **OpenID Connect (OIDC)** 方式を推奨します。
 
