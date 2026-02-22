@@ -224,6 +224,15 @@ terraform apply
 
 > GitHub Actions からの認証には、パスワードレスな **OpenID Connect (OIDC)** 方式を推奨します。
 
+## ドキュメント
+
+| ドキュメント | 説明 |
+|---|---|
+| [インフラ設計書](docs/infrastructure-design.md) | アーキテクチャの設計方針・各コンポーネントの詳細設計 |
+| [インフラ構築手順書](docs/setup-guide.md) | 初回セットアップから `terraform apply` までの手順 |
+| [プラン選定ガイド](docs/plan-selection-guide.md) | App Service・PostgreSQL のプラン選定基準と環境ごとの推奨設定 |
+| [運用手順書](docs/operations-guide.md) | デプロイ・監視・障害対応などの日常運用タスク |
+
 ## セキュリティに関する注意事項
 
 - **tfstate には機密情報が含まれます。** Blob Storage のアクセス制御を適切に設定し、パブリックアクセスは無効にしてください。
