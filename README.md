@@ -4,32 +4,25 @@ Azure 上に構築する Web アプリケーションインフラの Terraform �
 
 ## アーキテクチャ概要
 
-```
-インターネット
-     │ HTTPS
-     ▼
-┌────────────────────────────────────────────────────────────┐
-│  Virtual Network                                           │
-│                                                            │
-│  ┌───────────────────────┐   ┌────────────────────────┐   │
-│  │  App Service          │   │  PostgreSQL             │   │
-│  │  (VNet 統合)           │──▶│  Flexible Server        │   │
-│  │  + Managed Identity   │   │  (VNet インジェクション)  │   │
-│  └──────────┬────────────┘   └────────────────────────┘   │
-│             │                                             │
-│             ▼                                             │
-│  ┌───────────────────────┐                               │
-│  │  Azure Key Vault      │                               │
-│  │  (機密情報の保管)       │                               │
-│  └───────────────────────┘                               │
-└────────────────────────────────────────────────────────────┘
-          │ ログ送信
-          ▼
-┌──────────────────────┐   ┌──────────────────────────┐
-│  Log Analytics       │   │  Microsoft Entra          │
-│  Workspace           │   │  External ID              │
-│  (ログ集約・監視)     │   │  (外部ユーザー認証・認可)   │
-└──────────────────────┘   └──────────────────────────┘
+```mermaid
+graph TB
+    Internet["インターネット"]
+    EntraID["Microsoft Entra External ID\n(外部ユーザー認証・認可)"]
+
+    subgraph VNet["Virtual Network"]
+        AppService["Azure App Service\n(VNet 統合 + Managed Identity)"]
+        PostgreSQL["Azure Database for PostgreSQL\nフレキシブルサーバー\n(VNet インジェクション)"]
+        KeyVault["Azure Key Vault\n(機密情報の保管)"]
+    end
+
+    LogAnalytics["Log Analytics Workspace\n(ログ集約・監視)"]
+
+    Internet -->|HTTPS| AppService
+    Internet <-->|認証・認可| EntraID
+    AppService -->|DB 接続| PostgreSQL
+    AppService -->|Managed Identity 経由で参照| KeyVault
+    AppService -->|診断ログ| LogAnalytics
+    PostgreSQL -->|診断ログ| LogAnalytics
 ```
 
 | コンポーネント | 用途 |
