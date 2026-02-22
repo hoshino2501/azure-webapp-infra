@@ -8,7 +8,7 @@ vnet_address_space        = "10.0.0.0/16"
 subnet_app_service_prefix = "10.0.1.0/24"
 subnet_postgresql_prefix  = "10.0.2.0/24"
 
-app_service_sku = "B1"
+app_service_sku = "B2"
 docker_image_name = "nginx:latest"
 docker_registry_url = "https://index.docker.io"
 
