@@ -325,14 +325,23 @@ tfstate は Azure Blob Storage で管理します。環境ごとに独立した�
 
 各モジュールのデプロイ依存順序は以下のとおりです。
 
-```
-log_analytics
-     │
-networking ──────────────────────────┐
-     │                               │
-entra_external_id    app_service ←── key_vault ←── (app_service の principal_id)
-                          ↑
-                     postgresql
+```mermaid
+flowchart TD
+    log_analytics["log_analytics"]
+    networking["networking"]
+    entra_external_id["entra_external_id"]
+    app_service["app_service"]
+    key_vault["key_vault"]
+    postgresql["postgresql"]
+
+    log_analytics --> app_service
+    log_analytics --> key_vault
+    log_analytics --> postgresql
+    networking --> app_service
+    networking --> postgresql
+    entra_external_id --> app_service
+    postgresql --> app_service
+    app_service -->|"app_service_principal_id"| key_vault
 ```
 
 Terraform は依存関係を自動解決しますが、`app_service` は `key_vault` の `app_service_principal_id` 出力を参照するため、内部的な循環参照に注意が必要です（現在の実装では `module.app_service.app_service_principal_id` を `module.key_vault` に渡す構造のため、`key_vault` は `app_service` の後に作成されます）。
