@@ -7,15 +7,15 @@ Azure 上に構築する Web アプリケーションインフラの Terraform �
 ```mermaid
 graph TB
     Internet["インターネット"]
-    EntraID["Microsoft Entra External ID\n(外部ユーザー認証・認可)"]
+    EntraID["Microsoft Entra External ID<br/>(外部ユーザー認証・認可)"]
 
     subgraph VNet["Virtual Network"]
-        AppService["Azure App Service\n(VNet 統合 + Managed Identity)"]
-        PostgreSQL["Azure Database for PostgreSQL\nフレキシブルサーバー\n(VNet インジェクション)"]
-        KeyVault["Azure Key Vault\n(機密情報の保管)"]
+        AppService["Azure App Service<br/>(VNet 統合 + Managed Identity)"]
+        PostgreSQL["Azure Database for PostgreSQL<br/>フレキシブルサーバー<br/>(VNet インジェクション)"]
+        KeyVault["Azure Key Vault<br/>(機密情報の保管)"]
     end
 
-    LogAnalytics["Log Analytics Workspace\n(ログ集約・監視)"]
+    LogAnalytics["Log Analytics Workspace<br/>(ログ集約・監視)"]
 
     Internet -->|HTTPS| AppService
     Internet <-->|認証・認可| EntraID
