@@ -192,9 +192,9 @@ terraform apply
 
 | 項目 | dev | staging | prod |
 |---|---|---|---|
-| App Service SKU | B1 | P1v3 | P2v3 |
+| App Service SKU | B2 | P0v3 | P1v3 |
 | App Service Always On | 無効 | 有効 | 有効 |
-| PostgreSQL SKU | B_Standard_B1ms | GP_Standard_D2s_v3 | GP_Standard_D4s_v3 |
+| PostgreSQL SKU | B_Standard_B1ms | B_Standard_B2ms | GP_Standard_D2s_v3 |
 | PostgreSQL ストレージ | 32 GB | 64 GB | 128 GB |
 | DBバックアップ保持期間 | 7 日 | 14 日 | 35 日 |
 | DB geo冗長バックアップ | 無効 | 無効 | 有効 |
